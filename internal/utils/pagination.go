@@ -11,6 +11,7 @@ type Pagination struct {
 	Page   int    `json:"page"`
 	Sort   string `json:"sort"`
 	SortBy string `json:"sort_by"`
+	Search string `json:"search"`
 }
 
 func GeneratePaginationFromRequest(c *gin.Context) Pagination {
@@ -39,11 +40,14 @@ func GeneratePaginationFromRequest(c *gin.Context) Pagination {
 		sortBy = sortByStr
 	}
 
+	search := c.Query("search")
+
 	return Pagination{
 		Limit:  limit,
 		Page:   page,
 		Sort:   sort,
 		SortBy: sortBy,
+		Search: search,
 	}
 }
 

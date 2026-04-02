@@ -85,6 +85,12 @@ func LoadConfig(path string) (*Config, error) {
 	if cfg.JWT.Secret == "" {
 		cfg.JWT.Secret = "default_secret_key"
 	}
+	if cfg.JWT.ExpirationHours == 0 {
+		cfg.JWT.ExpirationHours = 24
+	}
+	if cfg.JWT.RefreshExpirationHours == 0 {
+		cfg.JWT.RefreshExpirationHours = 168
+	}
 
 	return &cfg, nil
 }

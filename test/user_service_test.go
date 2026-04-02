@@ -24,7 +24,7 @@ func (s *stubUserRepo) GetByID(ctx context.Context, id uuid.UUID) (*entity.User,
 func (s *stubUserRepo) GetByEmail(ctx context.Context, email string) (*entity.User, error) {
 	return nil, nil
 }
-func (s *stubUserRepo) FindAll(ctx context.Context, limit, offset int, sort, sortBy string) ([]entity.User, int64, error) {
+func (s *stubUserRepo) FindAll(ctx context.Context, limit, offset int, search, sort, sortBy string) ([]entity.User, int64, error) {
 	return nil, 0, nil
 }
 func (s *stubUserRepo) Update(ctx context.Context, user *entity.User) error { return nil }

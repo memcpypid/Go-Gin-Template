@@ -49,7 +49,7 @@ func (s *authServiceImpl) Register(ctx context.Context, req dto.RegisterRequest)
 		Name:     req.Name,
 		Email:    req.Email,
 		Password: hashedPassword,
-		Role:     "user", 
+		Role:     "user",
 	}
 
 	if err := s.userRepo.Create(ctx, user); err != nil {
@@ -71,12 +71,12 @@ func (s *authServiceImpl) Login(ctx context.Context, req dto.LoginRequest) (*dto
 		return nil, errors.New("invalid credentials")
 	}
 
-	if !user.IsVerified {
-		return nil, errors.New("account is not verified")
-	}
-
 	if !utils.CheckPasswordHash(req.Password, user.Password) {
 		return nil, errors.New("invalid credentials")
+	}
+
+	if !user.IsVerified {
+		return nil, errors.New("account is not verified")
 	}
 
 	access, refresh, err := utils.GenerateTokens(

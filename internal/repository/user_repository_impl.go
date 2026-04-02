@@ -52,11 +52,16 @@ func (r *userRepositoryImpl) GetByEmail(ctx context.Context, email string) (*ent
 	return &user, nil
 }
 
-func (r *userRepositoryImpl) FindAll(ctx context.Context, limit, offset int, sort, sortBy string) ([]entity.User, int64, error) {
+func (r *userRepositoryImpl) FindAll(ctx context.Context, limit, offset int, search, sort, sortBy string) ([]entity.User, int64, error) {
 	var users []entity.User
 	var total int64
 
 	db := r.db.WithContext(ctx).Model(&entity.User{})
+
+	if search != "" {
+		searchTerm := "%" + search + "%"
+		db = db.Where("name ILIKE ? OR email ILIKE ?", searchTerm, searchTerm)
+	}
 
 	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, err

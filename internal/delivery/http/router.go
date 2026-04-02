@@ -50,6 +50,7 @@ func SetupRouter(
 		admin.Use(middleware.RoleMiddleware("admin"))
 		{
 			admin.GET("", userHandler.GetUsers)
+			admin.PUT("/:id", userHandler.UpdateUser)
 			admin.DELETE("/:id", userHandler.DeleteUser)
 			admin.PATCH("/:id/activate", userHandler.ActivateAccount)
 			admin.PATCH("/:id/deactivate", userHandler.DeactivateAccount)

@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"strconv"
 
 	"go-gin-template/internal/dto"
 	"go-gin-template/internal/repository"
@@ -68,13 +69,61 @@ func (s *userServiceImpl) UpdateProfile(ctx context.Context, userID uuid.UUID, r
 	return &res, nil
 }
 
-func (s *userServiceImpl) GetUsers(ctx context.Context, limit, offset int, sort, sortBy string) ([]dto.UserResponse, int64, error) {
-	users, total, err := s.userRepo.FindAll(ctx, limit, offset, sort, sortBy)
+func (s *userServiceImpl) GetUsers(ctx context.Context, limit, offset int, search, sort, sortBy string) ([]dto.UserResponse, int64, error) {
+	s.logger.Info("Service: GetUsers called", zap.String("limit", strconv.Itoa(limit)), zap.String("offset", strconv.Itoa(offset)), zap.String("search", search), zap.String("sort", sort), zap.String("sort_by", sortBy))
+	users, total, err := s.userRepo.FindAll(ctx, limit, offset, search, sort, sortBy)
 	if err != nil {
 		return nil, 0, err
 	}
 
 	return dto.ToUserResponseList(users), total, nil
+}
+
+func (s *userServiceImpl) UpdateUser(ctx context.Context, id uuid.UUID, req dto.UpdateUserRequest) (*dto.UserResponse, error) {
+	s.logger.Info("Service: UpdateUser called", zap.String("user_id", id.String()))
+
+	user, err := s.userRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, errors.New("user not found")
+	}
+
+	if req.Email != "" && req.Email != user.Email {
+		existingUser, err := s.userRepo.GetByEmail(ctx, req.Email)
+		if err != nil {
+			return nil, err
+		}
+		if existingUser != nil {
+			return nil, errors.New("email already registered")
+		}
+		user.Email = req.Email
+	}
+
+	if req.Name != "" {
+		user.Name = req.Name
+	}
+
+	if req.Role != "" {
+		user.Role = req.Role
+	}
+
+	if req.Password != "" {
+		hash, err := utils.HashPassword(req.Password)
+		if err != nil {
+			s.logger.Error("Service: Failed to hash password", zap.Error(err))
+			return nil, err
+		}
+		user.Password = hash
+	}
+
+	if err := s.userRepo.Update(ctx, user); err != nil {
+		return nil, err
+	}
+
+	res := dto.ToUserResponse(user)
+	return &res, nil
 }
 
 func (s *userServiceImpl) DeleteUser(ctx context.Context, id uuid.UUID) error {
@@ -87,7 +136,7 @@ func (s *userServiceImpl) DeleteUser(ctx context.Context, id uuid.UUID) error {
 	if user == nil {
 		return errors.New("user not found")
 	}
-	
+
 	if user.Role == "admin" {
 		return errors.New("cannot delete admin user")
 	}
@@ -106,6 +155,10 @@ func (s *userServiceImpl) ActivateAccount(ctx context.Context, id uuid.UUID) err
 		return errors.New("user not found")
 	}
 
+	if user.IsVerified {
+		return errors.New("account is already active/verified")
+	}
+
 	user.IsVerified = true
 	return s.userRepo.Update(ctx, user)
 }
@@ -119,6 +172,10 @@ func (s *userServiceImpl) DeactivateAccount(ctx context.Context, id uuid.UUID) e
 	}
 	if user == nil {
 		return errors.New("user not found")
+	}
+
+	if !user.IsVerified {
+		return errors.New("account is already inactive/not verified")
 	}
 
 	user.IsVerified = false
