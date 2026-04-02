@@ -99,3 +99,41 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response.Success("user deleted successfully", nil))
 }
+
+func (h *UserHandler) ActivateAccount(c *gin.Context) {
+	idStr := c.Param("id")
+	if idStr == "" {
+		idStr = c.GetString("userID")
+	}
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Error("invalid user id format"))
+		return
+	}
+
+	if err := h.userService.ActivateAccount(c.Request.Context(), id); err != nil {
+		c.JSON(http.StatusInternalServerError, response.Error(err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, response.Success("account activated successfully", nil))
+}
+
+func (h *UserHandler) DeactivateAccount(c *gin.Context) {
+	idStr := c.Param("id")
+	if idStr == "" {
+		idStr = c.GetString("userID")
+	}
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Error("invalid user id format"))
+		return
+	}
+
+	if err := h.userService.DeactivateAccount(c.Request.Context(), id); err != nil {
+		c.JSON(http.StatusInternalServerError, response.Error(err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, response.Success("account deactivated successfully", nil))
+}

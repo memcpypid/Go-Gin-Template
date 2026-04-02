@@ -71,6 +71,10 @@ func (s *authServiceImpl) Login(ctx context.Context, req dto.LoginRequest) (*dto
 		return nil, errors.New("invalid credentials")
 	}
 
+	if !user.IsVerified {
+		return nil, errors.New("account is not verified")
+	}
+
 	if !utils.CheckPasswordHash(req.Password, user.Password) {
 		return nil, errors.New("invalid credentials")
 	}

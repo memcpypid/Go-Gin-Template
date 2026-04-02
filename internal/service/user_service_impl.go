@@ -94,3 +94,33 @@ func (s *userServiceImpl) DeleteUser(ctx context.Context, id uuid.UUID) error {
 
 	return s.userRepo.Delete(ctx, id)
 }
+
+func (s *userServiceImpl) ActivateAccount(ctx context.Context, id uuid.UUID) error {
+	s.logger.Info("Service: ActivateAccount called", zap.String("user_id", id.String()))
+
+	user, err := s.userRepo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if user == nil {
+		return errors.New("user not found")
+	}
+
+	user.IsVerified = true
+	return s.userRepo.Update(ctx, user)
+}
+
+func (s *userServiceImpl) DeactivateAccount(ctx context.Context, id uuid.UUID) error {
+	s.logger.Info("Service: DeactivateAccount called", zap.String("user_id", id.String()))
+
+	user, err := s.userRepo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if user == nil {
+		return errors.New("user not found")
+	}
+
+	user.IsVerified = false
+	return s.userRepo.Update(ctx, user)
+}

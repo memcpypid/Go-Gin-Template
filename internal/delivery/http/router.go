@@ -51,6 +51,8 @@ func SetupRouter(
 		{
 			admin.GET("", userHandler.GetUsers)
 			admin.DELETE("/:id", userHandler.DeleteUser)
+			admin.PATCH("/:id/activate", userHandler.ActivateAccount)
+			admin.PATCH("/:id/deactivate", userHandler.DeactivateAccount)
 		}
 	}
 

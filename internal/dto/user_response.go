@@ -11,7 +11,8 @@ type UserResponse struct {
 	ID        uuid.UUID `json:"id"`
 	Name      string    `json:"name"`
 	Email     string    `json:"email"`
-	Role      string    `json:"role"`
+	Role       string    `json:"role"`
+	IsVerified bool      `json:"is_verified"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -21,8 +22,9 @@ func ToUserResponse(user *entity.User) UserResponse {
 		ID:        user.ID,
 		Name:      user.Name,
 		Email:     user.Email,
-		Role:      user.Role,
-		CreatedAt: user.CreatedAt,
+		Role:       user.Role,
+		IsVerified: user.IsVerified,
+		CreatedAt:  user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 	}
 }
