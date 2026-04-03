@@ -8,8 +8,8 @@ import (
 	"syscall"
 
 	"go-gin-template/internal/config"
-	deliverHttp "go-gin-template/internal/delivery/http"
 	"go-gin-template/internal/delivery/http/handler"
+	"go-gin-template/internal/delivery/http/route"
 	"go-gin-template/internal/middleware"
 	"go-gin-template/internal/repository"
 	"go-gin-template/internal/service"
@@ -66,12 +66,14 @@ func main() {
 	mw := middleware.NewMiddleware(cfg, logger)
 
 	// 9. New Router
-	router := deliverHttp.NewRouter(mw, authHandler, userHandler)
-	// 9. Start Server
+	routeHandler := route.NewRouter(mw, authHandler, userHandler)
+	engine := routeHandler.Setup()
+
+	// 10. Start Server
 	go func() {
 		addr := fmt.Sprintf(":%d", cfg.App.Port)
 		logger.Info(fmt.Sprintf("Starting server on %s", addr))
-		if err := router.Run(addr); err != nil {
+		if err := engine.Run(addr); err != nil {
 			logger.Fatal("Failed to run server", zap.Error(err))
 		}
 	}()
