@@ -48,7 +48,7 @@ func main() {
 	}
 
 	// 4. Initialize Validator & Translator
-	_, trans := config.NewValidator()
+	validate, trans := config.NewValidator()
 
 	// 5. Initialize Repositories
 	userRepo := repository.NewUserRepository(db, logger)
@@ -59,8 +59,8 @@ func main() {
 	authService := service.NewAuthService(userRepo, refreshTokenRepo, cfg, logger)
 
 	// 7. Initialize Handlers
-	userHandler := handler.NewUserHandler(userService, logger, trans)
-	authHandler := handler.NewAuthHandler(authService, logger, trans)
+	userHandler := handler.NewUserHandler(userService, logger, trans, validate)
+	authHandler := handler.NewAuthHandler(authService, logger, trans, validate)
 
 	// 8. Initialize Middlewares
 	mw := middleware.NewMiddleware(cfg, logger)

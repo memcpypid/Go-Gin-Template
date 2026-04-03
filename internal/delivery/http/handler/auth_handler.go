@@ -9,6 +9,7 @@ import (
 
 	ut "github.com/go-playground/universal-translator"
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"go.uber.org/zap"
 )
 
@@ -16,19 +17,26 @@ type AuthHandler struct {
 	authService service.AuthService
 	logger      *zap.Logger
 	trans       ut.Translator
+	validator   *validator.Validate
 }
 
-func NewAuthHandler(authService service.AuthService, logger *zap.Logger, trans ut.Translator) *AuthHandler {
+func NewAuthHandler(authService service.AuthService, logger *zap.Logger, trans ut.Translator, validator *validator.Validate) *AuthHandler {
 	return &AuthHandler{
 		authService: authService,
 		logger:      logger,
 		trans:       trans,
+		validator:   validator,
 	}
 }
 
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req dto.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, response.ValidationError(err, h.trans))
+		return
+	}
+
+	if err := h.validator.Struct(req); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, response.ValidationError(err, h.trans))
 		return
 	}
@@ -49,6 +57,11 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
+	if err := h.validator.Struct(req); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, response.ValidationError(err, h.trans))
+		return
+	}
+
 	loginResponse, err := h.authService.Login(c.Request.Context(), req)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, response.Error(http.StatusUnauthorized, err.Error()))
@@ -65,6 +78,11 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
+	if err := h.validator.Struct(req); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, response.ValidationError(err, h.trans))
+		return
+	}
+
 	tokenResponse, err := h.authService.RefreshToken(c.Request.Context(), req)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, response.Error(http.StatusUnauthorized, err.Error()))
@@ -77,6 +95,11 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 func (h *AuthHandler) Logout(c *gin.Context) {
 	var req dto.LogoutRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, response.ValidationError(err, h.trans))
+		return
+	}
+
+	if err := h.validator.Struct(req); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, response.ValidationError(err, h.trans))
 		return
 	}

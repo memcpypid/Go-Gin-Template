@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"strconv"
 
 	"go-gin-template/internal/dto"
 	"go-gin-template/internal/repository"
@@ -69,10 +68,18 @@ func (s *userServiceImpl) UpdateProfile(ctx context.Context, userID uuid.UUID, r
 	return &res, nil
 }
 
-func (s *userServiceImpl) GetUsers(ctx context.Context, limit, offset int, search, sort, sortBy string) ([]dto.UserResponse, int64, error) {
-	s.logger.Info("Service: GetUsers called", zap.String("limit", strconv.Itoa(limit)), zap.String("offset", strconv.Itoa(offset)), zap.String("search", search), zap.String("sort", sort), zap.String("sort_by", sortBy))
-	users, total, err := s.userRepo.FindAll(ctx, limit, offset, search, sort, sortBy)
+func (s *userServiceImpl) GetUsers(ctx context.Context, p *utils.Pagination) ([]dto.UserResponse, int64, error) {
+	s.logger.Info("Service: GetUsers called",
+		zap.Int("limit", p.Limit),
+		zap.Int("page", p.Page),
+		zap.String("search", p.Search),
+		zap.String("sort", p.Sort),
+		zap.String("sort_by", p.SortBy),
+	)
+
+	users, total, err := s.userRepo.FindAll(ctx, p)
 	if err != nil {
+		s.logger.Error("Service: GetUsers failed", zap.Error(err))
 		return nil, 0, err
 	}
 

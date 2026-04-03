@@ -8,23 +8,27 @@ import (
 	"go-gin-template/internal/utils"
 	"go-gin-template/pkg/response"
 
-	ut "github.com/go-playground/universal-translator"
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+
+	ut "github.com/go-playground/universal-translator"
 )
 
 type UserHandler struct {
 	userService service.UserService
 	logger      *zap.Logger
 	trans       ut.Translator
+	validator   *validator.Validate
 }
 
-func NewUserHandler(userService service.UserService, logger *zap.Logger, trans ut.Translator) *UserHandler {
+func NewUserHandler(userService service.UserService, logger *zap.Logger, trans ut.Translator, validator *validator.Validate) *UserHandler {
 	return &UserHandler{
 		userService: userService,
 		logger:      logger,
 		trans:       trans,
+		validator:   validator,
 	}
 }
 
@@ -59,6 +63,11 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 		return
 	}
 
+	if err := h.validator.Struct(req); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, response.ValidationError(err, h.trans))
+		return
+	}
+
 	userResponse, err := h.userService.UpdateProfile(c.Request.Context(), userID, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.Error(http.StatusInternalServerError, err.Error()))
@@ -71,7 +80,7 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 func (h *UserHandler) GetUsers(c *gin.Context) {
 	pagination := utils.GeneratePaginationFromRequest(c)
 
-	users, total, err := h.userService.GetUsers(c.Request.Context(), pagination.Limit, pagination.GetOffset(), pagination.Search, pagination.Sort, pagination.SortBy)
+	users, total, err := h.userService.GetUsers(c.Request.Context(), &pagination)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.Error(http.StatusInternalServerError, err.Error()))
 		return
@@ -151,6 +160,11 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 
 	var req dto.UpdateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, response.ValidationError(err, h.trans))
+		return
+	}
+
+	if err := h.validator.Struct(req); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, response.ValidationError(err, h.trans))
 		return
 	}

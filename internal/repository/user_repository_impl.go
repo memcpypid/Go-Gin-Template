@@ -5,9 +5,10 @@ import (
 	"errors"
 
 	"go-gin-template/internal/entity"
+	"go-gin-template/internal/utils"
 
-	"gorm.io/gorm"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
 type userRepositoryImpl struct {
@@ -36,31 +37,22 @@ func (r *userRepositoryImpl) GetByEmail(ctx context.Context, email string) (*ent
 	return &user, nil
 }
 
-func (r *userRepositoryImpl) FindAll(ctx context.Context, limit, offset int, search, sort, sortBy string) ([]entity.User, int64, error) {
+func (r *userRepositoryImpl) FindAll(ctx context.Context, p *utils.Pagination) ([]entity.User, int64, error) {
 	var users []entity.User
 	var total int64
 
-	db := r.db.WithContext(ctx).Model(&entity.User{})
+	// Build query with search logic using helper
+	query := r.BuildPaginationQuery(r.db.WithContext(ctx), p, []string{"name", "email"})
 
-	if search != "" {
-		searchTerm := "%" + search + "%"
-		db = db.Where("name ILIKE ? OR email ILIKE ?", searchTerm, searchTerm)
-	}
-
-	if err := db.Count(&total).Error; err != nil {
+	// Get total count before pagination
+	if err := query.Count(&total).Error; err != nil {
+		r.logger.Error("Repository: FindAll count failed", zap.Error(err))
 		return nil, 0, err
 	}
 
-	if sortBy == "" {
-		sortBy = "created_at"
-	}
-	if sort != "asc" && sort != "desc" {
-		sort = "desc"
-	}
-	orderClause := sortBy + " " + sort
-
-	if err := db.Limit(limit).Offset(offset).Order(orderClause).Find(&users).Error; err != nil {
-		r.logger.Error("Repository: FindAll failed", zap.Error(err))
+	// Execute paginated query
+	if err := query.Scopes(r.Paginate(p)).Find(&users).Error; err != nil {
+		r.logger.Error("Repository: FindAll query failed", zap.Error(err))
 		return nil, 0, err
 	}
 
