@@ -26,6 +26,7 @@ func NewUserRepository(db *gorm.DB, logger *zap.Logger) UserRepository {
 }
 
 func (r *userRepositoryImpl) GetByEmail(ctx context.Context, email string) (*entity.User, error) {
+	r.logger.Info("Repository: Getting user by email", zap.String("email", email))
 	var user entity.User
 	if err := r.db.WithContext(ctx).Where("email = ?", email).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -38,6 +39,7 @@ func (r *userRepositoryImpl) GetByEmail(ctx context.Context, email string) (*ent
 }
 
 func (r *userRepositoryImpl) FindAll(ctx context.Context, p *utils.Pagination) ([]entity.User, int64, error) {
+	r.logger.Info("Repository: Finding all users")
 	var users []entity.User
 	var total int64
 

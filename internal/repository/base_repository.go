@@ -40,18 +40,22 @@ func (r *baseRepositoryImpl[T]) Paginate(pagination *utils.Pagination) func(db *
 	}
 }
 func (r *baseRepositoryImpl[T]) Create(ctx context.Context, entity *T) error {
+	r.logger.Info("Repository: Creating entity")
 	return r.db.WithContext(ctx).Create(entity).Error
 }
 
 func (r *baseRepositoryImpl[T]) Update(ctx context.Context, entity *T) error {
+	r.logger.Info("Repository: Updating entity")
 	return r.db.WithContext(ctx).Save(entity).Error
 }
 
 func (r *baseRepositoryImpl[T]) Delete(ctx context.Context, id uuid.UUID) error {
+	r.logger.Info("Repository: Deleting entity", zap.String("id", id.String()))
 	return r.db.WithContext(ctx).Delete(new(T), "id = ?", id).Error
 }
 
 func (r *baseRepositoryImpl[T]) GetByID(ctx context.Context, id uuid.UUID) (*T, error) {
+	r.logger.Info("Repository: Getting entity by ID", zap.String("id", id.String()))
 	var entity T
 	if err := r.db.WithContext(ctx).First(&entity, "id = ?", id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -63,6 +67,7 @@ func (r *baseRepositoryImpl[T]) GetByID(ctx context.Context, id uuid.UUID) (*T, 
 }
 
 func (r *baseRepositoryImpl[T]) Count(ctx context.Context) (int64, error) {
+	r.logger.Info("Repository: Counting entities")
 	var total int64
 	err := r.db.WithContext(ctx).Model(new(T)).Count(&total).Error
 	return total, err

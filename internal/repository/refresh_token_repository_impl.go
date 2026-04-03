@@ -26,7 +26,7 @@ func NewRefreshTokenRepository(db *gorm.DB, logger *zap.Logger) RefreshTokenRepo
 }
 
 func (r *refreshTokenRepositoryImpl) GetByToken(ctx context.Context, token string) (*entity.RefreshToken, error) {
-	r.logger.Info("Repository: GetByToken RefreshToken called")
+	r.logger.Info("Repository: Finding refresh token")
 	var refreshToken entity.RefreshToken
 	err := r.db.WithContext(ctx).Where("token = ? AND revoked_at IS NULL", token).First(&refreshToken).Error
 	if err != nil {
@@ -39,12 +39,12 @@ func (r *refreshTokenRepositoryImpl) GetByToken(ctx context.Context, token strin
 }
 
 func (r *refreshTokenRepositoryImpl) Revoke(ctx context.Context, id uuid.UUID) error {
-	r.logger.Info("Repository: Revoke RefreshToken called", zap.String("id", id.String()))
+	r.logger.Info("Repository: Revoking refresh token", zap.String("id", id.String()))
 	now := time.Now()
 	return r.db.WithContext(ctx).Model(&entity.RefreshToken{}).Where("id = ?", id).Update("revoked_at", &now).Error
 }
 
 func (r *refreshTokenRepositoryImpl) DeleteByUserID(ctx context.Context, userID uuid.UUID) error {
-	r.logger.Info("Repository: DeleteByUserID RefreshToken called", zap.String("user_id", userID.String()))
+	r.logger.Info("Repository: Deleting tokens by user ID", zap.String("user_id", userID.String()))
 	return r.db.WithContext(ctx).Where("user_id = ?", userID).Delete(&entity.RefreshToken{}).Error
 }
