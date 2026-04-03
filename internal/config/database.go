@@ -3,8 +3,6 @@ package config
 import (
 	"fmt"
 
-	"go-gin-template/internal/entity"
-	"go-gin-template/internal/utils"
 
 	"go.uber.org/zap"
 	"gorm.io/driver/mysql"
@@ -45,34 +43,5 @@ func NewDatabase(cfg *Config, logger *zap.Logger) (*gorm.DB, error) {
 	sqlDB.SetMaxIdleConns(10)
 	sqlDB.SetMaxOpenConns(100)
 
-	// Automigrate
-	err = gormDB.AutoMigrate(&entity.User{}, &entity.RefreshToken{})
-	if err != nil {
-		return nil, err
-	}
-
-	// Seed Default Admin
-	seedAdmin(gormDB, cfg)
-
 	return gormDB, nil
-}
-
-func seedAdmin(db *gorm.DB, cfg *Config) {
-	var count int64
-	db.Model(&entity.User{}).Where("role = ?", "admin").Count(&count)
-
-	if count == 0 {
-		hashedPassword, err := utils.HashPassword(cfg.Admin.Password)
-		if err != nil {
-			panic("failed to hash default admin password")
-		}
-
-		admin := entity.User{
-			Name:     "Admin",
-			Email:    cfg.Admin.Email,
-			Password: hashedPassword,
-			Role:     "admin",
-		}
-		db.Create(&admin)
-	}
 }

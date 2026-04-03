@@ -1,7 +1,13 @@
-.PHONY: run build test tidy clean docker-up docker-down docker-logs
+.PHONY: run build test tidy clean docker-up docker-down docker-logs migrate seed
 
 run:
 	go run cmd/server/main.go
+
+migrate:
+	go run cmd/migrate/main.go
+
+seed:
+	go run cmd/seed/main.go
 
 build:
 	go build -o bin/server cmd/server/main.go
