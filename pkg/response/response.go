@@ -17,10 +17,11 @@ type PaginationMeta struct {
 }
 
 type SuccessResponse struct {
-	Success bool            `json:"success"`
-	Message string          `json:"message"`
-	Data    interface{}     `json:"data"`
-	Meta    *PaginationMeta `json:"meta,omitempty"`
+	Success    bool            `json:"success"`
+	StatusCode int             `json:"statusCode"`
+	Message    string          `json:"message"`
+	Data       interface{}     `json:"data"`
+	Meta       *PaginationMeta `json:"meta,omitempty"`
 }
 
 type ErrorDetail struct {
@@ -36,14 +37,15 @@ type ErrorResponse struct {
 	Stack      string        `json:"stack,omitempty"`
 }
 
-func Success(message string, data interface{}) SuccessResponse {
+func Success(statusCode int, message string, data interface{}) SuccessResponse {
 	if data == nil {
 		data = map[string]interface{}{}
 	}
 	return SuccessResponse{
-		Success: true,
-		Message: message,
-		Data:    data,
+		Success:    true,
+		StatusCode: statusCode,
+		Message:    message,
+		Data:       data,
 	}
 }
 
@@ -89,7 +91,7 @@ func ValidationError(err error, trans ut.Translator) ErrorResponse {
 	}
 }
 
-func SuccessWithPagination(message string, data interface{}, total int64, limit, page int) SuccessResponse {
+func SuccessWithPagination(statusCode int, message string, data interface{}, total int64, limit, page int) SuccessResponse {
 	if data == nil {
 		data = []interface{}{}
 	}
@@ -103,9 +105,10 @@ func SuccessWithPagination(message string, data interface{}, total int64, limit,
 	hasPrevious := page > 1
 
 	return SuccessResponse{
-		Success: true,
-		Message: message,
-		Data:    data,
+		Success:    true,
+		StatusCode: statusCode,
+		Message:    message,
+		Data:       data,
 		Meta: &PaginationMeta{
 			Total:       total,
 			Limit:       limit,

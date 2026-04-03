@@ -42,7 +42,7 @@ func (h *UserHandler) GetProfile(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response.Success("profile retrieved successfully", userResponse))
+	c.JSON(http.StatusOK, response.Success(http.StatusOK, "profile retrieved successfully", userResponse))
 }
 
 func (h *UserHandler) UpdateProfile(c *gin.Context) {
@@ -65,7 +65,7 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response.Success("profile updated successfully", userResponse))
+	c.JSON(http.StatusOK, response.Success(http.StatusOK, "profile updated successfully", userResponse))
 }
 
 func (h *UserHandler) GetUsers(c *gin.Context) {
@@ -78,6 +78,7 @@ func (h *UserHandler) GetUsers(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, response.SuccessWithPagination(
+		http.StatusOK,
 		"users retrieved successfully",
 		users,
 		total,
@@ -99,7 +100,7 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response.Success("user deleted successfully", nil))
+	c.JSON(http.StatusOK, response.Success(http.StatusOK, "user deleted successfully", nil))
 }
 
 func (h *UserHandler) ActivateAccount(c *gin.Context) {
@@ -118,7 +119,7 @@ func (h *UserHandler) ActivateAccount(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response.Success("account activated successfully", nil))
+	c.JSON(http.StatusOK, response.Success(http.StatusOK, "account activated successfully", nil))
 }
 
 func (h *UserHandler) DeactivateAccount(c *gin.Context) {
@@ -137,7 +138,7 @@ func (h *UserHandler) DeactivateAccount(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response.Success("account deactivated successfully", nil))
+	c.JSON(http.StatusOK, response.Success(http.StatusOK, "account deactivated successfully", nil))
 }
 
 func (h *UserHandler) UpdateUser(c *gin.Context) {
@@ -160,5 +161,5 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response.Success("user updated successfully", userResponse))
+	c.JSON(http.StatusOK, response.Success(http.StatusOK, "user updated successfully", userResponse))
 }

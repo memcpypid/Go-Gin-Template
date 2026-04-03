@@ -4,6 +4,7 @@ import (
 	"go-gin-template/internal/delivery/http/handler"
 	"go-gin-template/internal/middleware"
 	"go-gin-template/pkg/response"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -35,7 +36,7 @@ func (r *Router) Setup() *gin.Engine {
 	engine.Use(r.mw.LoggingMiddleware())
 
 	engine.GET("/health", func(c *gin.Context) {
-		c.JSON(200, response.Success("server is healthy", nil))
+		c.JSON(200, response.Success(http.StatusOK, "server is healthy", nil))
 	})
 
 	api := engine.Group("/api/v1")
