@@ -85,7 +85,15 @@ func (s *userServiceImpl) GetUsers(ctx context.Context, p *utils.Pagination) ([]
 
 	return dto.ToUserResponseList(users), total, nil
 }
-
+func (s *userServiceImpl) GetCountUser(ctx context.Context) (dto.CounUserResponse, error) {
+	s.logger.Info("Service: GetCountUser called")
+	count, err := s.userRepo.Count(ctx)
+	if err != nil {
+		s.logger.Error("Service: GetCountUser failed", zap.Error(err))
+		return dto.CounUserResponse{}, err
+	}
+	return dto.CounUserResponse{Count: count}, nil
+}
 func (s *userServiceImpl) UpdateUser(ctx context.Context, id uuid.UUID, req dto.UpdateUserRequest) (*dto.UserResponse, error) {
 	s.logger.Info("Service: UpdateUser called", zap.String("user_id", id.String()))
 

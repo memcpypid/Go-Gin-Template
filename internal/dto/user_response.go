@@ -3,29 +3,33 @@ package dto
 import (
 	"time"
 
-	"github.com/google/uuid"
 	"go-gin-template/internal/entity"
+
+	"github.com/google/uuid"
 )
 
+type CounUserResponse struct {
+	Count int64 `json:"count"`
+}
 type UserResponse struct {
-	ID        uuid.UUID `json:"id"`
-	Name      string    `json:"name"`
-	Email     string    `json:"email"`
+	ID         uuid.UUID `json:"id"`
+	Name       string    `json:"name"`
+	Email      string    `json:"email"`
 	Role       string    `json:"role"`
 	IsVerified bool      `json:"is_verified"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
 }
 
 func ToUserResponse(user *entity.User) UserResponse {
 	return UserResponse{
-		ID:        user.ID,
-		Name:      user.Name,
-		Email:     user.Email,
+		ID:         user.ID,
+		Name:       user.Name,
+		Email:      user.Email,
 		Role:       user.Role,
 		IsVerified: user.IsVerified,
 		CreatedAt:  user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
+		UpdatedAt:  user.UpdatedAt,
 	}
 }
 

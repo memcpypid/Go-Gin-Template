@@ -8,6 +8,7 @@ import (
 )
 
 type RefreshTokenRepository interface {
+	BaseRepository[entity.RefreshToken]
 	Create(ctx context.Context, token *entity.RefreshToken) error
 	GetByToken(ctx context.Context, token string) (*entity.RefreshToken, error)
 	Revoke(ctx context.Context, id uuid.UUID) error

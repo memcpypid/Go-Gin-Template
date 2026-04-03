@@ -95,7 +95,14 @@ func (h *UserHandler) GetUsers(c *gin.Context) {
 		pagination.Page,
 	))
 }
-
+func (h *UserHandler) GetCountUser(c *gin.Context) {
+	count, err := h.userService.GetCountUser(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, response.Error(http.StatusInternalServerError, err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, response.Success(http.StatusOK, "count user retrieved successfully", count))
+}
 func (h *UserHandler) DeleteUser(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)

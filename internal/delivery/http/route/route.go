@@ -59,6 +59,7 @@ func (r *Router) Setup() *gin.Engine {
 		admin.Use(r.mw.RoleMiddleware("admin"))
 		{
 			admin.GET("", r.userHandler.GetUsers)
+			admin.GET("/count", r.userHandler.GetCountUser)
 			admin.PUT("/:id", r.userHandler.UpdateUser)
 			admin.DELETE("/:id", r.userHandler.DeleteUser)
 			admin.PATCH("/:id/activate", r.userHandler.ActivateAccount)
