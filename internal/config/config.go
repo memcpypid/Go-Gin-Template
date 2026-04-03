@@ -40,47 +40,54 @@ type AdminConfig struct {
 	Password string `mapstructure:"ADMIN_PASSWORD"`
 }
 
-func LoadConfig(path string) (*Config, error) {
-	viper.SetConfigFile(path + "/.env")
-	viper.AutomaticEnv()
+func NewViper(path string) (*viper.Viper, error) {
+	v := viper.New()
+	v.SetConfigFile(path + "/.env")
+	v.AutomaticEnv()
 
-	if err := viper.ReadInConfig(); err != nil {
+	if err := v.ReadInConfig(); err != nil {
 		log.Printf("Error reading env file, falling back to environment variables: %v", err)
 	}
 
+	return v, nil
+}
+
+func NewConfig(v *viper.Viper) (*Config, error) {
 	var cfg Config
 
-	viper.BindEnv("APP_ENV")
-	viper.BindEnv("APP_PORT")
-	viper.BindEnv("APP_NAME")
-	viper.BindEnv("DB_DRIVER")
-	viper.BindEnv("DB_HOST")
-	viper.BindEnv("DB_PORT")
-	viper.BindEnv("DB_USER")
-	viper.BindEnv("DB_PASS")
-	viper.BindEnv("DB_NAME")
-	viper.BindEnv("DB_SSLMODE")
-	viper.BindEnv("JWT_SECRET")
-	viper.BindEnv("JWT_EXPIRATION")
-	viper.BindEnv("JWT_REFRESH_EXPIRATION")
-	viper.BindEnv("ADMIN_EMAIL")
-	viper.BindEnv("ADMIN_PASSWORD")
+	// Bind environment variables
+	v.BindEnv("APP_ENV")
+	v.BindEnv("APP_PORT")
+	v.BindEnv("APP_NAME")
+	v.BindEnv("DB_DRIVER")
+	v.BindEnv("DB_HOST")
+	v.BindEnv("DB_PORT")
+	v.BindEnv("DB_USER")
+	v.BindEnv("DB_PASS")
+	v.BindEnv("DB_NAME")
+	v.BindEnv("DB_SSLMODE")
+	v.BindEnv("JWT_SECRET")
+	v.BindEnv("JWT_EXPIRATION")
+	v.BindEnv("JWT_REFRESH_EXPIRATION")
+	v.BindEnv("ADMIN_EMAIL")
+	v.BindEnv("ADMIN_PASSWORD")
 
-	if err := viper.Unmarshal(&cfg.App); err != nil {
+	if err := v.Unmarshal(&cfg.App); err != nil {
 		return nil, err
 	}
-	if err := viper.Unmarshal(&cfg.Database); err != nil {
+	if err := v.Unmarshal(&cfg.Database); err != nil {
 		return nil, err
 	}
-	if err := viper.Unmarshal(&cfg.JWT); err != nil {
+	if err := v.Unmarshal(&cfg.JWT); err != nil {
 		return nil, err
 	}
-	if err := viper.Unmarshal(&cfg.Admin); err != nil {
+	if err := v.Unmarshal(&cfg.Admin); err != nil {
 		return nil, err
 	}
 
+	// Set defaults
 	if cfg.App.Port == 0 {
-		cfg.App.Port = 8080 // Default
+		cfg.App.Port = 8080
 	}
 	if cfg.JWT.Secret == "" {
 		cfg.JWT.Secret = "default_secret_key"

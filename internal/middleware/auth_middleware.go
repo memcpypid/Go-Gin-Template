@@ -4,14 +4,13 @@ import (
 	"net/http"
 	"strings"
 
-	"go-gin-template/internal/config"
 	"go-gin-template/internal/utils"
 	"go-gin-template/pkg/response"
 
 	"github.com/gin-gonic/gin"
 )
 
-func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
+func (m *Middleware) AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" || len(authHeader) < 7 || authHeader[:7] != "Bearer " {
@@ -28,7 +27,7 @@ func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
 		}
 
 		tokenString := authHeader[7:]
-		claims, err := utils.ValidateToken(tokenString, cfg.JWT.Secret)
+		claims, err := utils.ValidateToken(tokenString, m.cfg.JWT.Secret)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, response.Error(http.StatusUnauthorized, "invalid or expired token"))
 			c.Abort()

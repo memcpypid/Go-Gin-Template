@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func LoggingMiddleware(log *zap.Logger) gin.HandlerFunc {
+func (m *Middleware) LoggingMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 		path := c.Request.URL.Path
@@ -30,13 +30,13 @@ func LoggingMiddleware(log *zap.Logger) gin.HandlerFunc {
 
 		if len(c.Errors) > 0 {
 			logFields = append(logFields, zap.String("errors", c.Errors.String()))
-			log.Error("Request failed", logFields...)
+			m.logger.Error("Request failed", logFields...)
 		} else if status >= 400 && status < 500 {
-			log.Warn("Client error", logFields...)
+			m.logger.Warn("Client error", logFields...)
 		} else if status >= 500 {
-			log.Error("Server error", logFields...)
+			m.logger.Error("Server error", logFields...)
 		} else {
-			log.Info("Request handled", logFields...)
+			m.logger.Info("Request handled", logFields...)
 		}
 	}
 }

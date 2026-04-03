@@ -1,31 +1,25 @@
 package http
 
 import (
-	"go-gin-template/internal/config"
 	"go-gin-template/internal/delivery/http/handler"
 	"go-gin-template/internal/middleware"
 	"go-gin-template/pkg/response"
 
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 )
 
-func SetupRouter(
-	cfg *config.Config,
-	logger *zap.Logger,
+func NewRouter(
+	mw *middleware.Middleware,
 	authHandler *handler.AuthHandler,
 	userHandler *handler.UserHandler,
 ) *gin.Engine {
 
-	if cfg.App.Env == "production" {
-		gin.SetMode(gin.ReleaseMode)
-	}
-
 	router := gin.New()
 
 	router.Use(gin.Recovery())
-	router.Use(middleware.CORSMiddleware())
-	router.Use(middleware.LoggingMiddleware(logger))
+	router.Use(gin.Logger())
+	router.Use(mw.CORSMiddleware())
+	router.Use(mw.LoggingMiddleware())
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, response.Success("server is healthy", nil))
@@ -42,13 +36,13 @@ func SetupRouter(
 	}
 
 	protected := api.Group("/")
-	protected.Use(middleware.AuthMiddleware(cfg))
+	protected.Use(mw.AuthMiddleware())
 	{
-		protected.GET("/me", userHandler.GetProfile)
-		protected.PUT("/me", userHandler.UpdateProfile)
+		protected.GET("/users/me", userHandler.GetProfile)
+		protected.PUT("/users/me", userHandler.UpdateProfile)
 
 		admin := protected.Group("/users")
-		admin.Use(middleware.RoleMiddleware("admin"))
+		admin.Use(mw.RoleMiddleware("admin"))
 		{
 			admin.GET("", userHandler.GetUsers)
 			admin.PUT("/:id", userHandler.UpdateUser)

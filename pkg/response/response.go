@@ -2,44 +2,10 @@ package response
 
 import (
 	"fmt"
-	"reflect"
-	"strings"
 
-	"github.com/gin-gonic/gin/binding"
-	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
-	en_translations "github.com/go-playground/validator/v10/translations/en"
 )
-
-var (
-	uni      *ut.UniversalTranslator
-	trans    ut.Translator
-	validate *validator.Validate
-)
-
-func init() {
-	// Initialize locales and translator
-	enLocale := en.New()
-	uni = ut.New(enLocale, enLocale)
-	trans, _ = uni.GetTranslator("en")
-
-	// Get the standard validator engine from Gin
-	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
-		validate = v
-		// Register default translations
-		en_translations.RegisterDefaultTranslations(validate, trans)
-
-		// Register custom name mapper to use JSON tags in error messages
-		validate.RegisterTagNameFunc(func(fld reflect.StructField) string {
-			name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
-			if name == "-" {
-				return ""
-			}
-			return name
-		})
-	}
-}
 
 type PaginationMeta struct {
 	Total       int64 `json:"total"`
@@ -90,13 +56,18 @@ func Error(statusCode int, message string, errs ...ErrorDetail) ErrorResponse {
 	}
 }
 
-func ValidationError(err error) ErrorResponse {
+func ValidationError(err error, trans ut.Translator) ErrorResponse {
 	var errDetails []ErrorDetail
 
 	if validationErrs, ok := err.(validator.ValidationErrors); ok {
 		for _, e := range validationErrs {
 			// Translate message automatically
-			message := e.Translate(trans)
+			var message string
+			if trans != nil {
+				message = e.Translate(trans)
+			} else {
+				message = e.Error()
+			}
 
 			errDetails = append(errDetails, ErrorDetail{
 				Field:   fmt.Sprintf("body.%s", e.Field()),

@@ -1,4 +1,4 @@
-package logger
+package config
 
 import (
 	"os"
@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-func InitLogger(env string) (*zap.Logger, error) {
+func NewLogger(env string) (*zap.Logger, error) {
 	if env != "production" {
 		config := zap.NewDevelopmentConfig()
 		config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
@@ -57,8 +57,6 @@ func InitLogger(env string) (*zap.Logger, error) {
 		zapcore.NewCore(encoder, zapcore.AddSync(infoFile), infoLevel),
 		zapcore.NewCore(encoder, zapcore.AddSync(warnFile), warnLevel),
 		zapcore.NewCore(encoder, zapcore.AddSync(errorFile), errorLevel),
-		// Also output to stdout in production but maybe minimal? 
-		// User specifically asked to "simpan lognya di file saja"
 	)
 
 	return zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel)), nil

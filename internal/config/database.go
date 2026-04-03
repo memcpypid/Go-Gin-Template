@@ -1,19 +1,19 @@
-package database
+package config
 
 import (
 	"fmt"
 
-	"go-gin-template/internal/config"
 	"go-gin-template/internal/entity"
 	"go-gin-template/internal/utils"
 
+	"go.uber.org/zap"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
+	gormLogger "gorm.io/gorm/logger"
 )
 
-func InitDatabase(cfg *config.Config) (*gorm.DB, error) {
+func NewDatabase(cfg *Config, logger *zap.Logger) (*gorm.DB, error) {
 	var dialector gorm.Dialector
 	var dsn string
 
@@ -30,7 +30,7 @@ func InitDatabase(cfg *config.Config) (*gorm.DB, error) {
 	}
 
 	gormDB, err := gorm.Open(dialector, &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
+		Logger: gormLogger.Default.LogMode(gormLogger.Info),
 	})
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func InitDatabase(cfg *config.Config) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	// Connection pooling tuning could go here
+	// Connection pooling tuning
 	sqlDB.SetMaxIdleConns(10)
 	sqlDB.SetMaxOpenConns(100)
 
@@ -57,7 +57,7 @@ func InitDatabase(cfg *config.Config) (*gorm.DB, error) {
 	return gormDB, nil
 }
 
-func seedAdmin(db *gorm.DB, cfg *config.Config) {
+func seedAdmin(db *gorm.DB, cfg *Config) {
 	var count int64
 	db.Model(&entity.User{}).Where("role = ?", "admin").Count(&count)
 

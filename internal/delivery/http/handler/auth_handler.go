@@ -7,6 +7,7 @@ import (
 	"go-gin-template/internal/service"
 	"go-gin-template/pkg/response"
 
+	ut "github.com/go-playground/universal-translator"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
@@ -14,19 +15,21 @@ import (
 type AuthHandler struct {
 	authService service.AuthService
 	logger      *zap.Logger
+	trans       ut.Translator
 }
 
-func NewAuthHandler(authService service.AuthService, logger *zap.Logger) *AuthHandler {
+func NewAuthHandler(authService service.AuthService, logger *zap.Logger, trans ut.Translator) *AuthHandler {
 	return &AuthHandler{
 		authService: authService,
 		logger:      logger,
+		trans:       trans,
 	}
 }
 
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req dto.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, response.ValidationError(err))
+		c.JSON(http.StatusUnprocessableEntity, response.ValidationError(err, h.trans))
 		return
 	}
 
@@ -42,7 +45,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req dto.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, response.ValidationError(err))
+		c.JSON(http.StatusUnprocessableEntity, response.ValidationError(err, h.trans))
 		return
 	}
 
@@ -58,7 +61,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	var req dto.RefreshTokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, response.ValidationError(err))
+		c.JSON(http.StatusUnprocessableEntity, response.ValidationError(err, h.trans))
 		return
 	}
 
@@ -74,7 +77,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 func (h *AuthHandler) Logout(c *gin.Context) {
 	var req dto.LogoutRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, response.ValidationError(err))
+		c.JSON(http.StatusUnprocessableEntity, response.ValidationError(err, h.trans))
 		return
 	}
 

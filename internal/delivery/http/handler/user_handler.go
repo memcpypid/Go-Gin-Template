@@ -8,6 +8,7 @@ import (
 	"go-gin-template/internal/utils"
 	"go-gin-template/pkg/response"
 
+	ut "github.com/go-playground/universal-translator"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -16,12 +17,14 @@ import (
 type UserHandler struct {
 	userService service.UserService
 	logger      *zap.Logger
+	trans       ut.Translator
 }
 
-func NewUserHandler(userService service.UserService, logger *zap.Logger) *UserHandler {
+func NewUserHandler(userService service.UserService, logger *zap.Logger, trans ut.Translator) *UserHandler {
 	return &UserHandler{
 		userService: userService,
 		logger:      logger,
+		trans:       trans,
 	}
 }
 
@@ -52,7 +55,7 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 
 	var req dto.UpdateProfileRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, response.ValidationError(err))
+		c.JSON(http.StatusUnprocessableEntity, response.ValidationError(err, h.trans))
 		return
 	}
 
@@ -147,7 +150,7 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 
 	var req dto.UpdateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, response.ValidationError(err))
+		c.JSON(http.StatusUnprocessableEntity, response.ValidationError(err, h.trans))
 		return
 	}
 
