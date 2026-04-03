@@ -14,7 +14,7 @@ type TokenClaims struct {
 	jwt.RegisteredClaims
 }
 
-func GenerateTokens(userID uuid.UUID, role, secret string, accessExpHours, refreshExpHours int) (accessToken, refreshToken string, err error) {
+func GenerateTokens(userID uuid.UUID, role, secret string, accessExpHours, refreshExpHours int) (accessToken, refreshToken string, refreshExpAt time.Time, err error) {
 	secretKey := []byte(secret)
 
 	// Access Token
@@ -29,22 +29,23 @@ func GenerateTokens(userID uuid.UUID, role, secret string, accessExpHours, refre
 	accessTokenRaw := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
 	accessTokenStr, err := accessTokenRaw.SignedString(secretKey)
 	if err != nil {
-		return "", "", err
+		return "", "", time.Time{}, err
 	}
 
 	// Refresh Token
+	refreshExpAt = time.Now().Add(time.Duration(refreshExpHours) * time.Hour)
 	refreshClaims := jwt.RegisteredClaims{
 		Subject:   userID.String(),
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(refreshExpHours) * time.Hour)),
+		ExpiresAt: jwt.NewNumericDate(refreshExpAt),
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
 	}
 	refreshTokenRaw := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
 	refreshTokenStr, err := refreshTokenRaw.SignedString(secretKey)
 	if err != nil {
-		return "", "", err
+		return "", "", time.Time{}, err
 	}
 
-	return accessTokenStr, refreshTokenStr, nil
+	return accessTokenStr, refreshTokenStr, refreshExpAt, nil
 }
 
 func ValidateToken(tokenString, secret string) (*TokenClaims, error) {

@@ -46,7 +46,7 @@ func InitDatabase(cfg *config.Config) (*gorm.DB, error) {
 	sqlDB.SetMaxOpenConns(100)
 
 	// Automigrate
-	err = gormDB.AutoMigrate(&entity.User{})
+	err = gormDB.AutoMigrate(&entity.User{}, &entity.RefreshToken{})
 	if err != nil {
 		return nil, err
 	}

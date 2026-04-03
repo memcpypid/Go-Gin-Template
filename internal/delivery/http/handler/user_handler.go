@@ -29,13 +29,13 @@ func (h *UserHandler) GetProfile(c *gin.Context) {
 	userIDStr := c.GetString("userID")
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, response.Error("invalid user id"))
+		c.JSON(http.StatusBadRequest, response.Error(http.StatusBadRequest, "invalid user id"))
 		return
 	}
 
 	userResponse, err := h.userService.GetProfile(c.Request.Context(), userID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.Error(err.Error()))
+		c.JSON(http.StatusInternalServerError, response.Error(http.StatusInternalServerError, err.Error()))
 		return
 	}
 
@@ -46,19 +46,19 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 	userIDStr := c.GetString("userID")
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, response.Error("invalid user id"))
+		c.JSON(http.StatusBadRequest, response.Error(http.StatusBadRequest, "invalid user id"))
 		return
 	}
 
 	var req dto.UpdateProfileRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, response.Error(err.Error()))
+		c.JSON(http.StatusUnprocessableEntity, response.ValidationError(err))
 		return
 	}
 
 	userResponse, err := h.userService.UpdateProfile(c.Request.Context(), userID, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.Error(err.Error()))
+		c.JSON(http.StatusInternalServerError, response.Error(http.StatusInternalServerError, err.Error()))
 		return
 	}
 
@@ -70,7 +70,7 @@ func (h *UserHandler) GetUsers(c *gin.Context) {
 
 	users, total, err := h.userService.GetUsers(c.Request.Context(), pagination.Limit, pagination.GetOffset(), pagination.Search, pagination.Sort, pagination.SortBy)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.Error(err.Error()))
+		c.JSON(http.StatusInternalServerError, response.Error(http.StatusInternalServerError, err.Error()))
 		return
 	}
 
@@ -87,12 +87,12 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, response.Error("invalid user id format"))
+		c.JSON(http.StatusBadRequest, response.Error(http.StatusBadRequest, "invalid user id format"))
 		return
 	}
 
 	if err := h.userService.DeleteUser(c.Request.Context(), id); err != nil {
-		c.JSON(http.StatusInternalServerError, response.Error(err.Error()))
+		c.JSON(http.StatusInternalServerError, response.Error(http.StatusInternalServerError, err.Error()))
 		return
 	}
 
@@ -106,12 +106,12 @@ func (h *UserHandler) ActivateAccount(c *gin.Context) {
 	}
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, response.Error("invalid user id format"))
+		c.JSON(http.StatusBadRequest, response.Error(http.StatusBadRequest, "invalid user id format"))
 		return
 	}
 
 	if err := h.userService.ActivateAccount(c.Request.Context(), id); err != nil {
-		c.JSON(http.StatusInternalServerError, response.Error(err.Error()))
+		c.JSON(http.StatusInternalServerError, response.Error(http.StatusInternalServerError, err.Error()))
 		return
 	}
 
@@ -125,12 +125,12 @@ func (h *UserHandler) DeactivateAccount(c *gin.Context) {
 	}
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, response.Error("invalid user id format"))
+		c.JSON(http.StatusBadRequest, response.Error(http.StatusBadRequest, "invalid user id format"))
 		return
 	}
 
 	if err := h.userService.DeactivateAccount(c.Request.Context(), id); err != nil {
-		c.JSON(http.StatusInternalServerError, response.Error(err.Error()))
+		c.JSON(http.StatusInternalServerError, response.Error(http.StatusInternalServerError, err.Error()))
 		return
 	}
 
@@ -141,19 +141,19 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, response.Error("invalid user id format"))
+		c.JSON(http.StatusBadRequest, response.Error(http.StatusBadRequest, "invalid user id format"))
 		return
 	}
 
 	var req dto.UpdateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, response.Error(err.Error()))
+		c.JSON(http.StatusUnprocessableEntity, response.ValidationError(err))
 		return
 	}
 
 	userResponse, err := h.userService.UpdateUser(c.Request.Context(), id, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.Error(err.Error()))
+		c.JSON(http.StatusInternalServerError, response.Error(http.StatusInternalServerError, err.Error()))
 		return
 	}
 

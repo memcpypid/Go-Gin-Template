@@ -14,23 +14,23 @@ import (
 func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
-			c.JSON(http.StatusUnauthorized, response.Error("authorization header is required"))
+		if authHeader == "" || len(authHeader) < 7 || authHeader[:7] != "Bearer " {
+			c.JSON(http.StatusUnauthorized, response.Error(http.StatusUnauthorized, "authorization header is required"))
 			c.Abort()
 			return
 		}
 
 		parts := strings.SplitN(authHeader, " ", 2)
 		if len(parts) != 2 || parts[0] != "Bearer" {
-			c.JSON(http.StatusUnauthorized, response.Error("authorization header format must be Bearer {token}"))
+			c.JSON(http.StatusUnauthorized, response.Error(http.StatusUnauthorized, "authorization header format must be Bearer {token}"))
 			c.Abort()
 			return
 		}
 
-		tokenString := parts[1]
+		tokenString := authHeader[7:]
 		claims, err := utils.ValidateToken(tokenString, cfg.JWT.Secret)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, response.Error("invalid or expired token"))
+			c.JSON(http.StatusUnauthorized, response.Error(http.StatusUnauthorized, "invalid or expired token"))
 			c.Abort()
 			return
 		}

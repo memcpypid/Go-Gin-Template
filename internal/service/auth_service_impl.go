@@ -15,16 +15,18 @@ import (
 )
 
 type authServiceImpl struct {
-	userRepo repository.UserRepository
-	cfg      *config.Config
-	logger   *zap.Logger
+	userRepo         repository.UserRepository
+	refreshTokenRepo repository.RefreshTokenRepository
+	cfg              *config.Config
+	logger           *zap.Logger
 }
 
-func NewAuthService(userRepo repository.UserRepository, cfg *config.Config, logger *zap.Logger) AuthService {
+func NewAuthService(userRepo repository.UserRepository, refreshTokenRepo repository.RefreshTokenRepository, cfg *config.Config, logger *zap.Logger) AuthService {
 	return &authServiceImpl{
-		userRepo: userRepo,
-		cfg:      cfg,
-		logger:   logger,
+		userRepo:         userRepo,
+		refreshTokenRepo: refreshTokenRepo,
+		cfg:              cfg,
+		logger:           logger,
 	}
 }
 
@@ -79,7 +81,7 @@ func (s *authServiceImpl) Login(ctx context.Context, req dto.LoginRequest) (*dto
 		return nil, errors.New("account is not verified")
 	}
 
-	access, refresh, err := utils.GenerateTokens(
+	access, refresh, refreshExpAt, err := utils.GenerateTokens(
 		user.ID,
 		user.Role,
 		s.cfg.JWT.Secret,
@@ -91,6 +93,17 @@ func (s *authServiceImpl) Login(ctx context.Context, req dto.LoginRequest) (*dto
 		return nil, err
 	}
 
+	// Save refresh token to DB
+	refreshTokenEntity := &entity.RefreshToken{
+		Token:     refresh,
+		UserID:    user.ID,
+		ExpiresAt: refreshExpAt,
+	}
+	if err := s.refreshTokenRepo.Create(ctx, refreshTokenEntity); err != nil {
+		s.logger.Error("Service: Failed to save refresh token", zap.Error(err))
+		return nil, err
+	}
+
 	return &dto.LoginResponse{
 		AccessToken:  access,
 		RefreshToken: refresh,
@@ -99,6 +112,16 @@ func (s *authServiceImpl) Login(ctx context.Context, req dto.LoginRequest) (*dto
 }
 
 func (s *authServiceImpl) RefreshToken(ctx context.Context, req dto.RefreshTokenRequest) (*dto.TokenResponse, error) {
+	// Validate token in DB
+	storedToken, err := s.refreshTokenRepo.GetByToken(ctx, req.RefreshToken)
+	if err != nil {
+		return nil, err
+	}
+	if storedToken == nil {
+		return nil, errors.New("invalid or expired refresh token")
+	}
+
+	// Validate JWT
 	claims, err := utils.ValidateToken(req.RefreshToken, s.cfg.JWT.Secret)
 	if err != nil {
 		return nil, errors.New("invalid refresh token")
@@ -124,7 +147,7 @@ func (s *authServiceImpl) RefreshToken(ctx context.Context, req dto.RefreshToken
 		return nil, errors.New("user not found")
 	}
 
-	access, refresh, err := utils.GenerateTokens(
+	access, refresh, refreshExpAt, err := utils.GenerateTokens(
 		user.ID,
 		user.Role,
 		s.cfg.JWT.Secret,
@@ -135,8 +158,46 @@ func (s *authServiceImpl) RefreshToken(ctx context.Context, req dto.RefreshToken
 		return nil, err
 	}
 
+	// Revoke old token
+	if err := s.refreshTokenRepo.Revoke(ctx, storedToken.ID); err != nil {
+		s.logger.Error("Service: Failed to revoke old refresh token", zap.Error(err))
+		// Continue even if revoking fails, but maybe log it
+	}
+
+	// Save new refresh token
+	newRefreshTokenEntity := &entity.RefreshToken{
+		Token:     refresh,
+		UserID:    user.ID,
+		ExpiresAt: refreshExpAt,
+	}
+	if err := s.refreshTokenRepo.Create(ctx, newRefreshTokenEntity); err != nil {
+		s.logger.Error("Service: Failed to save new refresh token", zap.Error(err))
+		return nil, err
+	}
+
 	return &dto.TokenResponse{
 		AccessToken:  access,
 		RefreshToken: refresh,
 	}, nil
+}
+
+func (s *authServiceImpl) Logout(ctx context.Context, req dto.LogoutRequest) error {
+	s.logger.Info("Service: Logout called")
+
+	// Validate token in DB
+	storedToken, err := s.refreshTokenRepo.GetByToken(ctx, req.RefreshToken)
+	if err != nil {
+		return err
+	}
+	if storedToken == nil {
+		return errors.New("invalid or already revoked refresh token")
+	}
+
+	// Revoke token
+	if err := s.refreshTokenRepo.Revoke(ctx, storedToken.ID); err != nil {
+		s.logger.Error("Service: Failed to revoke refresh token", zap.Error(err))
+		return err
+	}
+
+	return nil
 }
