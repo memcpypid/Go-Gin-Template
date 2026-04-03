@@ -3,12 +3,12 @@ package config
 import (
 	"fmt"
 
-
 	"go.uber.org/zap"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	gormLogger "gorm.io/gorm/logger"
+	"moul.io/zapgorm2"
 )
 
 func NewDatabase(cfg *Config, logger *zap.Logger) (*gorm.DB, error) {
@@ -27,8 +27,11 @@ func NewDatabase(cfg *Config, logger *zap.Logger) (*gorm.DB, error) {
 		return nil, fmt.Errorf("unsupported database driver: %s", cfg.Database.Driver)
 	}
 
+	zapGormLogger := zapgorm2.New(logger)
+	zapGormLogger.SetAsDefault()
+
 	gormDB, err := gorm.Open(dialector, &gorm.Config{
-		Logger: gormLogger.Default.LogMode(gormLogger.Info),
+		Logger: zapGormLogger.LogMode(gormLogger.Info),
 	})
 	if err != nil {
 		return nil, err
