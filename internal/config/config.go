@@ -30,9 +30,9 @@ type DatabaseConfig struct {
 }
 
 type JWTConfig struct {
-	Secret                 string `mapstructure:"JWT_SECRET"`
-	ExpirationHours        int    `mapstructure:"JWT_EXPIRATION_HOURS"`
-	RefreshExpirationHours int    `mapstructure:"JWT_REFRESH_EXPIRATION_HOURS"`
+	Secret            string `mapstructure:"JWT_SECRET"`
+	Expiration        string `mapstructure:"JWT_EXPIRATION"`
+	RefreshExpiration string `mapstructure:"JWT_REFRESH_EXPIRATION"`
 }
 
 type AdminConfig struct {
@@ -61,8 +61,8 @@ func LoadConfig(path string) (*Config, error) {
 	viper.BindEnv("DB_NAME")
 	viper.BindEnv("DB_SSLMODE")
 	viper.BindEnv("JWT_SECRET")
-	viper.BindEnv("JWT_EXPIRATION_HOURS")
-	viper.BindEnv("JWT_REFRESH_EXPIRATION_HOURS")
+	viper.BindEnv("JWT_EXPIRATION")
+	viper.BindEnv("JWT_REFRESH_EXPIRATION")
 	viper.BindEnv("ADMIN_EMAIL")
 	viper.BindEnv("ADMIN_PASSWORD")
 
@@ -85,11 +85,11 @@ func LoadConfig(path string) (*Config, error) {
 	if cfg.JWT.Secret == "" {
 		cfg.JWT.Secret = "default_secret_key"
 	}
-	if cfg.JWT.ExpirationHours == 0 {
-		cfg.JWT.ExpirationHours = 24
+	if cfg.JWT.Expiration == "" {
+		cfg.JWT.Expiration = "24h"
 	}
-	if cfg.JWT.RefreshExpirationHours == 0 {
-		cfg.JWT.RefreshExpirationHours = 168
+	if cfg.JWT.RefreshExpiration == "" {
+		cfg.JWT.RefreshExpiration = "168h"
 	}
 
 	return &cfg, nil

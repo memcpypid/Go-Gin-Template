@@ -2,6 +2,9 @@ package utils
 
 import (
 	"errors"
+	"fmt"
+	"regexp"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -14,7 +17,35 @@ type TokenClaims struct {
 	jwt.RegisteredClaims
 }
 
-func GenerateTokens(userID uuid.UUID, role, secret string, accessExpHours, refreshExpHours int) (accessToken, refreshToken string, refreshExpAt time.Time, err error) {
+var durationRegex = regexp.MustCompile(`^(\d+)([hmd])$`)
+
+// ParseDuration converts a duration string like "1h", "30m", or "7d" into time.Duration.
+func ParseDuration(s string) (time.Duration, error) {
+	match := durationRegex.FindStringSubmatch(s)
+	if len(match) != 3 {
+		// Fallback to standard ParseDuration if no unit or unknown unit
+		return time.ParseDuration(s)
+	}
+
+	value, err := strconv.Atoi(match[1])
+	if err != nil {
+		return 0, err
+	}
+
+	unit := match[2]
+	switch unit {
+	case "m":
+		return time.Duration(value) * time.Minute, nil
+	case "h":
+		return time.Duration(value) * time.Hour, nil
+	case "d":
+		return time.Duration(value) * 24 * time.Hour, nil
+	default:
+		return 0, fmt.Errorf("unknown unit: %s", unit)
+	}
+}
+
+func GenerateTokens(userID uuid.UUID, role, secret string, accessDuration, refreshDuration time.Duration) (accessToken, refreshToken string, refreshExpAt time.Time, err error) {
 	secretKey := []byte(secret)
 
 	// Access Token
@@ -22,7 +53,7 @@ func GenerateTokens(userID uuid.UUID, role, secret string, accessExpHours, refre
 		UserID: userID,
 		Role:   role,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(accessExpHours) * time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(accessDuration)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
@@ -33,7 +64,7 @@ func GenerateTokens(userID uuid.UUID, role, secret string, accessExpHours, refre
 	}
 
 	// Refresh Token
-	refreshExpAt = time.Now().Add(time.Duration(refreshExpHours) * time.Hour)
+	refreshExpAt = time.Now().Add(refreshDuration)
 	refreshClaims := jwt.RegisteredClaims{
 		Subject:   userID.String(),
 		ExpiresAt: jwt.NewNumericDate(refreshExpAt),

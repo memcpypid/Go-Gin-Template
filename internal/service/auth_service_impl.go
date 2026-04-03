@@ -81,12 +81,23 @@ func (s *authServiceImpl) Login(ctx context.Context, req dto.LoginRequest) (*dto
 		return nil, errors.New("account is not verified")
 	}
 
+	accessDuration, err := utils.ParseDuration(s.cfg.JWT.Expiration)
+	if err != nil {
+		s.logger.Error("Service: Invalid access token duration", zap.Error(err))
+		return nil, err
+	}
+	refreshDuration, err := utils.ParseDuration(s.cfg.JWT.RefreshExpiration)
+	if err != nil {
+		s.logger.Error("Service: Invalid refresh token duration", zap.Error(err))
+		return nil, err
+	}
+
 	access, refresh, refreshExpAt, err := utils.GenerateTokens(
 		user.ID,
 		user.Role,
 		s.cfg.JWT.Secret,
-		s.cfg.JWT.ExpirationHours,
-		s.cfg.JWT.RefreshExpirationHours,
+		accessDuration,
+		refreshDuration,
 	)
 	if err != nil {
 		s.logger.Error("Service: Failed to generate tokens", zap.Error(err))
@@ -147,12 +158,21 @@ func (s *authServiceImpl) RefreshToken(ctx context.Context, req dto.RefreshToken
 		return nil, errors.New("user not found")
 	}
 
+	accessDuration, err := utils.ParseDuration(s.cfg.JWT.Expiration)
+	if err != nil {
+		return nil, err
+	}
+	refreshDuration, err := utils.ParseDuration(s.cfg.JWT.RefreshExpiration)
+	if err != nil {
+		return nil, err
+	}
+
 	access, refresh, refreshExpAt, err := utils.GenerateTokens(
 		user.ID,
 		user.Role,
 		s.cfg.JWT.Secret,
-		s.cfg.JWT.ExpirationHours,
-		s.cfg.JWT.RefreshExpirationHours,
+		accessDuration,
+		refreshDuration,
 	)
 	if err != nil {
 		return nil, err
